@@ -120,7 +120,7 @@ class BurgerSupervisor:
         return tf.reduce_mean(f**2)
     
     def loss(self, x_u, y_u, x_f):
-        total_loss = (1-self.alpha)*self.u_loss(y_u, x_u) + self.alpha*self.f_loss(x_f) 
+        total_loss = self.u_loss(y_u, x_u) + self.alpha*self.f_loss(x_f) 
         return total_loss
     
     def train(self, x_train, y_train, x_val, y_val):
@@ -156,9 +156,6 @@ class BurgerSupervisor:
         return r2, f_loss
 
 
-    def plot(self):
-        pass
-
 
 def get_data(NT, NX, TMAX, XMAX, NU):
     """
@@ -184,9 +181,9 @@ def get_data(NT, NX, TMAX, XMAX, NU):
     x_u_train = x_[u_train_idx]
     y_u_train = y_[u_train_idx]
 
-    NUM_BC_PT = 200
+    NUM_BC_PT = 500
     u_idx = np.random.permutation(len(x_u_train))[:NUM_BC_PT]
-    NUM_COL_PT = 10000#int(.1 * len(x_)) # 10% of the points in domain.
+    NUM_COL_PT = 2000#int(.1 * len(x_)) # 10% of the points in domain.
     print("Generating data... total size %d, number of collocation points for trianing %d" % (len(x_), NUM_COL_PT))
     all_idx = np.arange(len(x_)).tolist()
     col_idx = [i for i in all_idx if (i not in u_train_idx)]
@@ -195,6 +192,36 @@ def get_data(NT, NX, TMAX, XMAX, NU):
     x_f_train = x_[f_idx]
     # y_f_train = y_[f_idx]
 
-    x_test = x_[col_idx]
-    y_test = y_[col_idx]
-    return (x_u_train[u_idx], x_f_train), y_u_train[u_idx], (x_test, y_test)
+    x_val = x_[col_idx][:2048] # keep a small number for now for testing
+    y_val = y_[col_idx][:2048]
+    return (x_u_train[u_idx], x_f_train), y_u_train[u_idx], (x_val, y_val), (x_, y_)
+
+def plotter(x_, u_, name):
+    import matplotlib.animation as animation
+    # u_analytical,x = convection_diffusion(1024, 256, 2, 2.0*PI, 0.01)
+
+    # x = np.linspace(0, 2.0*PI, 256)
+    # t = np.linspace(0, 2, 1024)
+    # xv, tv = np.meshgrid(x, t)
+    u_ = u_.reshape(1024, 256).T
+    xv = x_[:,0].reshape(1024, 256)
+    tv = x_[:, 1].reshape(1024, 256)
+
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(2, 1)
+    ax[0].contourf(tv, xv, u_.T)
+    ax[0].set_xlabel('t')
+    ax[0].set_ylabel('x')
+
+    line,= ax[1].plot(xv[0], u_[:, 0])
+    text = ax[1].text(0.8, 0.9, ' ', transform=ax[1].transAxes)
+    ax[1].set_xlabel('x')
+    ax[1].set_ylabel('u')
+    def animate(t):
+        line.set_ydata(u_[:, t])
+        text.set_text('t=%d'%t)
+        return line, text
+    
+    ani = animation.FuncAnimation(fig, animate, frames=200, interval=50)
+    plt.tight_layout()
+    ani.save('./Burgers_' + name + '.gif', writer='imagemagick', fps=60)

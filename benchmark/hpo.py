@@ -16,6 +16,7 @@ problem.add_hyperparameter((2, 12), "batch_size", default_value=2)
 problem.add_hyperparameter((10, 15), "epochs", default_value=10)
 problem.add_hyperparameter((0., 1.), "alpha", default_value=.5)
 
+x, y, val, test = get_data(1024, 256, 2, 6, 0.01)
 
 @profile
 def run(config):
