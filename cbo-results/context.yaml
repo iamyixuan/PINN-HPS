@@ -1,0 +1,39 @@
+calls:
+- max_evals: 10
+  timeout: null
+search:
+  acq_func: UCB
+  acq_optimizer: auto
+  evaluator:
+    callbacks: list
+    num_workers: 1
+    run_function: function
+    run_function_kwargs: {}
+    type: SerialEvaluator
+  filter_duplicated: true
+  filter_failures: mean
+  initial_points:
+  - - 0.5
+    - 2
+    - 10
+    - 5
+    - 0.01
+    - 5
+  kappa: 1.96
+  log_dir: /Users/yixuan/Documents/AllWorkStuff/ImPACTS/codes/DeepHyper-PINN/cbo-results
+  max_failures: 100
+  moo_scalarization_strategy: Chebyshev
+  moo_scalarization_weight: null
+  multi_point_strategy: cl_min
+  n_initial_points: 10
+  n_jobs: 1
+  n_points: 10000
+  num_workers: 1
+  problem: HpProblem
+  random_state: RandomState
+  surrogate_model: RF
+  sync_communication: false
+  type: CBO
+  update_prior: false
+  verbose: 0
+  xi: 0.001
