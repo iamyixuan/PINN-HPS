@@ -156,9 +156,6 @@ class BurgerSupervisor:
         return r2, f_loss
 
 
-    def plot(self):
-        pass
-
 
 def get_data(NT, NX, TMAX, XMAX, NU):
     """
@@ -184,9 +181,9 @@ def get_data(NT, NX, TMAX, XMAX, NU):
     x_u_train = x_[u_train_idx]
     y_u_train = y_[u_train_idx]
 
-    NUM_BC_PT = 200
+    NUM_BC_PT = 500
     u_idx = np.random.permutation(len(x_u_train))[:NUM_BC_PT]
-    NUM_COL_PT = 10000#int(.1 * len(x_)) # 10% of the points in domain.
+    NUM_COL_PT = 2000#int(.1 * len(x_)) # 10% of the points in domain.
     print("Generating data... total size %d, number of collocation points for trianing %d" % (len(x_), NUM_COL_PT))
     all_idx = np.arange(len(x_)).tolist()
     col_idx = [i for i in all_idx if (i not in u_train_idx)]
@@ -195,9 +192,40 @@ def get_data(NT, NX, TMAX, XMAX, NU):
     x_f_train = x_[f_idx]
     # y_f_train = y_[f_idx]
 
-    x_test = x_[col_idx]
-    y_test = y_[col_idx]
-    return (x_u_train[u_idx], x_f_train), y_u_train[u_idx], (x_test, y_test)
+    x_val = x_[col_idx][:2048] # keep a small number for now for testing
+    y_val = y_[col_idx][:2048]
+    return (x_u_train[u_idx], x_f_train), y_u_train[u_idx], (x_val, y_val), (x_, y_)
+
+def plotter(x_, u_, name):
+    import matplotlib.animation as animation
+    # u_analytical,x = convection_diffusion(1024, 256, 2, 2.0*PI, 0.01)
+
+    # x = np.linspace(0, 2.0*PI, 256)
+    # t = np.linspace(0, 2, 1024)
+    # xv, tv = np.meshgrid(x, t)
+    u_ = u_.reshape(1024, 256).T
+    xv = x_[:,0].reshape(1024, 256)
+    tv = x_[:, 1].reshape(1024, 256)
+
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(2, 1)
+    ax[0].contourf(tv, xv, u_.T)
+    ax[0].set_xlabel('t')
+    ax[0].set_ylabel('x')
+
+    line,= ax[1].plot(xv[0], u_[:, 0])
+    text = ax[1].text(0.8, 0.9, ' ', transform=ax[1].transAxes)
+    ax[1].set_xlabel('x')
+    ax[1].set_ylabel('u')
+    def animate(t):
+        line.set_ydata(u_[:, t])
+        text.set_text('t=%d'%t)
+        return line, text
+    
+    ani = animation.FuncAnimation(fig, animate, frames=200, interval=50)
+    plt.tight_layout()
+    ani.save('./Burgers_' + name + '.gif', writer='imagemagick', fps=60)
+
 
 
 if __name__ == "__main__":
@@ -228,65 +256,17 @@ if __name__ == "__main__":
     # plt.tight_layout()
     # ani.save('./Burgers.gif', writer='imagemagick', fps=60)
     # plt.show()
-    nu = 0.01 / np.pi         # constant in the diff. equation
-    N_u = 100                 # number of data points in the boundaries
-    N_f = 10000               # number of collocation points
 
-    # X_u_train: a set of pairs (x, t) located at:
-        # x =  1, t = [0,  1]
-        # x = -1, t = [0,  1]
-        # t =  0, x = [-1, 1]
-    x_upper = np.ones((N_u//4, 1), dtype=float)
-    print(x_upper)
-    x_lower = np.ones((N_u//4, 1), dtype=float) * (-1)
-    t_zero = np.zeros((N_u//2, 1), dtype=float)
-
-    t_upper = np.random.rand(N_u//4, 1)
-    t_lower = np.random.rand(N_u//4, 1)
-    x_zero = (-1) + np.random.rand(N_u//2, 1) * (1 - (-1))
-
-    # stack uppers, lowers and zeros:
-    X_upper = np.hstack( (x_upper, t_upper) )
-    X_lower = np.hstack( (x_lower, t_lower) )
-    X_zero = np.hstack( (x_zero, t_zero) )
-
-    # each one of these three arrays haS 2 columns, 
-    # now we stack them vertically, the resulting array will also have 2 
-    # columns and 100 rows:
-    X_u_train = np.vstack( (X_upper, X_lower, X_zero) )
-
-
-    # shuffle X_u_train:
-    index = np.arange(0, N_u)
-    np.random.shuffle(index)
-    X_u_train = X_u_train[index, :]
-    
-    # make X_f_train:
-    X_f_train = np.zeros((N_f, 2), dtype=float)
-    for row in range(N_f):
-        x = random.uniform(-1, 1)  # x range
-        t = random.uniform( 0, 1)  # t range
-
-        X_f_train[row, 0] = x 
-        X_f_train[row, 1] = t
-
-    # add the boundary points to the collocation points:
-    X_f_train = np.vstack( (X_f_train, X_u_train) )
-
-    # make u_train
-    u_upper =  np.zeros((N_u//4, 1), dtype=float)
-    u_lower =  np.zeros((N_u//4, 1), dtype=float) 
-    u_zero = -np.sin(np.pi * x_zero)  
-
-    # stack them in the same order as X_u_train was stacked:
-    u_train = np.vstack( (u_upper, u_lower, u_zero) )
-
-    # match indices with X_u_train
-    u_train = u_train[index, :]
-    #x, y, val = get_data(1024, 256, 2, 2*PI, 0.01)
+    x, y, val, test = get_data(1024, 256, 2, 2*PI, 0.01)
     net = PINN(num_layers=8, hidden_dim=20, output_dim=1, act_fn=tf.nn.tanh)
-    sup = BurgerSupervisor(nu=0.01, net=net, epochs=1000, batch_size=100, lr=0.01, alpha=1)
-    x = (X_u_train, X_f_train) 
-    a = sup.train(x, u_train, X_u_train, u_train)
+    sup = BurgerSupervisor(nu=0.01, net=net, epochs=100, batch_size=100, lr=0.001, alpha=.2)
+    a = sup.train(x, y, val[0], val[1])
+    u_pred = sup.net(test[0]).numpy()
+    plotter(test[0], test[1], 'true')
+    plotter(test[0], u_pred, 'pred')
+
+
+
+
     # out = net(x[0])
     # print(out.shape)
