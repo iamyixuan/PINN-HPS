@@ -1,5 +1,5 @@
 calls:
-- max_evals: 10
+- max_evals: 20
   timeout: null
 search:
   acq_func: UCB
@@ -13,14 +13,15 @@ search:
   filter_duplicated: true
   filter_failures: mean
   initial_points:
-  - - 0.5
+  - - tanh
+    - 0.5
     - 2
-    - 10
+    - 200
     - 5
     - 0.01
     - 5
   kappa: 1.96
-  log_dir: /Users/yixuan/Documents/AllWorkStuff/ImPACTS/codes/DeepHyper-PINN/cbo-results
+  log_dir: /Users/yixuan/Documents/AllWorkStuff/ImPACTS/codes/PINN-HPS/cbo-results
   max_failures: 100
   moo_scalarization_strategy: Chebyshev
   moo_scalarization_weight: null

@@ -1,0 +1,2 @@
+model_checkpoint_path: "weights_mixed_init"
+all_model_checkpoint_paths: "weights_mixed_init"

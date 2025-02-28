@@ -194,6 +194,7 @@ if __name__ == '__main__' :
     x_lower = np.ones((N_u//4, 1), dtype=float) * (-1)
     t_zero = np.zeros((N_u//2, 1), dtype=float)
 
+
     t_upper = np.random.rand(N_u//4, 1)
     t_lower = np.random.rand(N_u//4, 1)
     x_zero = (-1) + np.random.rand(N_u//2, 1) * (1 - (-1))
@@ -236,7 +237,7 @@ if __name__ == '__main__' :
     # match indices with X_u_train
     u_train = u_train[index, :]
 
-    # pass data sets to the PINN:
-    pinn = PhysicsInformedNN(X_u_train, u_train, X_f_train)
+    # # pass data sets to the PINN:
+    # pinn = PhysicsInformedNN(X_u_train, u_train, X_f_train)
 
-    pinn.train(1000)
+    # pinn.train(1000)
